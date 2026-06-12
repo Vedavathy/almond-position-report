@@ -1,0 +1,234 @@
+{
+  "cropYears": {
+    "2025-crop": {
+      "label": "2025-2026 Crop Year (2025 Crop)",
+      "months": {
+        "aug-2025": {
+          "month": "August",
+          "year": 2025,
+          "ytdReceipts": 259029819,
+          "ftmReceipts": 259029819,
+          "ytdShipments": 157803868,
+          "ftmShipments": 157803868,
+          "commitments": 526657034,
+          "uncommittedInventory": 53194621,
+          "sales": null
+        },
+        "sep-2025": {
+          "month": "September",
+          "year": 2025,
+          "ytdReceipts": 992391102,
+          "ftmReceipts": 733361283,
+          "ytdShipments": 355063001,
+          "ftmShipments": 197259133,
+          "commitments": 548939333,
+          "uncommittedInventory": 552347246,
+          "sales": 219541432
+        },
+        "oct-2025": {
+          "month": "October",
+          "year": 2025,
+          "ytdReceipts": 1698212540,
+          "ftmReceipts": 705821438,
+          "ytdShipments": 604291859,
+          "ftmShipments": 249228858,
+          "commitments": 561532723,
+          "uncommittedInventory": 982230007,
+          "sales": 261821248
+        },
+        "nov-2025": {
+          "month": "November",
+          "year": 2025,
+          "ytdReceipts": 2187599257,
+          "ftmReceipts": 489386717,
+          "ytdShipments": 824816500,
+          "ftmShipments": 220524641,
+          "commitments": 545289841,
+          "uncommittedInventory": 1257547231,
+          "sales": 204281759
+        },
+        "dec-2025": {
+          "month": "December",
+          "year": 2025,
+          "ytdReceipts": 2512491614,
+          "ftmReceipts": 324892357,
+          "ytdShipments": 1070576252,
+          "ftmShipments": 245759752,
+          "commitments": 496191773,
+          "uncommittedInventory": 1379280057,
+          "sales": 196661684
+        },
+        "jan-2026": {
+          "month": "January",
+          "year": 2026,
+          "ytdReceipts": 2626675217,
+          "ftmReceipts": 114183603,
+          "ytdShipments": 1276648654,
+          "ftmShipments": 206072402,
+          "commitments": 588320143,
+          "uncommittedInventory": 1192979216,
+          "sales": 298200772
+        },
+        "feb-2026": {
+          "month": "February",
+          "year": 2026,
+          "ytdReceipts": 2679493299,
+          "ftmReceipts": 52818082,
+          "ytdShipments": 1517784959,
+          "ftmShipments": 241136305,
+          "commitments": 593410305,
+          "uncommittedInventory": 998514469,
+          "sales": 246226467
+        },
+        "mar-2026": {
+          "month": "March",
+          "year": 2026,
+          "ytdReceipts": 2684413812,
+          "ftmReceipts": 4920513,
+          "ytdShipments": 1775772941,
+          "ftmShipments": 257987982,
+          "commitments": 576069675,
+          "uncommittedInventory": 762689220,
+          "sales": 240647352
+        },
+        "apr-2026": {
+          "month": "April",
+          "year": 2026,
+          "ytdReceipts": 2688311735,
+          "ftmReceipts": 3897923,
+          "ytdShipments": 1995668616,
+          "ftmShipments": 219895675,
+          "commitments": 516869085,
+          "uncommittedInventory": 605814099,
+          "sales": 160695085
+        },
+        "may-2026": {
+          "month": "May",
+          "year": 2026,
+          "ytdReceipts": 2690836961,
+          "ftmReceipts": 2525226,
+          "ytdShipments": 2213027643,
+          "ftmShipments": 217359027,
+          "commitments": 438256714,
+          "uncommittedInventory": 469542165,
+          "sales": 124943804
+        }
+      }
+    },
+    "2024-crop": {
+      "label": "2024-2025 Crop Year (2024 Crop)",
+      "months": {
+        "aug-2025": {
+          "month": "August",
+          "year": 2025,
+          "ytdReceipts": 290095103,
+          "ftmReceipts": 290095103,
+          "ytdShipments": 168282707,
+          "ftmShipments": 168282707,
+          "commitments": 607578955,
+          "uncommittedInventory": 11081740,
+          "sales": null
+        },
+        "sep-2025": {
+          "month": "September",
+          "year": 2025,
+          "ytdReceipts": 1035037391,
+          "ftmReceipts": 744942288,
+          "ytdShipments": 381845314,
+          "ftmShipments": 213562607,
+          "commitments": 667393493,
+          "uncommittedInventory": 467748037,
+          "sales": 273377145
+        },
+        "oct-2025": {
+          "month": "October",
+          "year": 2025,
+          "ytdReceipts": 1845321927,
+          "ftmReceipts": 810284536,
+          "ytdShipments": 640286280,
+          "ftmShipments": 258440966,
+          "commitments": 673689995,
+          "uncommittedInventory": 997089414,
+          "sales": 264737468
+        },
+        "nov-2025": {
+          "month": "November",
+          "year": 2025,
+          "ytdReceipts": 2342216825,
+          "ftmReceipts": 496894898,
+          "ytdShipments": 911666547,
+          "ftmShipments": 271380267,
+          "commitments": 611765122,
+          "uncommittedInventory": 1274591020,
+          "sales": 209455394
+        },
+        "dec-2025": {
+          "month": "December",
+          "year": 2025,
+          "ytdReceipts": 2575851709,
+          "ftmReceipts": 233634884,
+          "ytdShipments": 1144758125,
+          "ftmShipments": 233091578,
+          "commitments": 561206190,
+          "uncommittedInventory": 1321020561,
+          "sales": 182532646
+        },
+        "jan-2026": {
+          "month": "January",
+          "year": 2026,
+          "ytdReceipts": 2664236345,
+          "ftmReceipts": 88384636,
+          "ytdShipments": 1373398308,
+          "ftmShipments": 228640183,
+          "commitments": 571552902,
+          "uncommittedInventory": 1168650609,
+          "sales": 238987095
+        },
+        "feb-2026": {
+          "month": "February",
+          "year": 2026,
+          "ytdReceipts": 2681613610,
+          "ftmReceipts": 17377265,
+          "ytdShipments": 1588331289,
+          "ftmShipments": 214932981,
+          "commitments": 577416286,
+          "uncommittedInventory": 964883964,
+          "sales": 220796365
+        },
+        "mar-2026": {
+          "month": "March",
+          "year": 2026,
+          "ytdReceipts": 2700697403,
+          "ftmReceipts": 19083793,
+          "ytdShipments": 1809704004,
+          "ftmShipments": 221372715,
+          "commitments": 573627977,
+          "uncommittedInventory": 766001675,
+          "sales": 217584406
+        },
+        "apr-2026": {
+          "month": "April",
+          "year": 2026,
+          "ytdReceipts": 2708870140,
+          "ftmReceipts": 8172737,
+          "ytdShipments": 2050806483,
+          "ftmShipments": 241102479,
+          "commitments": 525074630,
+          "uncommittedInventory": 581461825,
+          "sales": 192549132
+        },
+        "may-2026": {
+          "month": "May",
+          "year": 2026,
+          "ytdReceipts": 2711678358,
+          "ftmReceipts": 2808218,
+          "ytdShipments": 2262568203,
+          "ftmShipments": 211761720,
+          "commitments": 402307610,
+          "uncommittedInventory": 495219179,
+          "sales": 102797552
+        }
+      }
+    }
+  }
+}

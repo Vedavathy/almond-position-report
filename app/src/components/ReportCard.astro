@@ -1,0 +1,24 @@
+---
+interface Props {
+  title: string;
+  month: string;
+  year: number;
+  cropYear: string;
+  slug: string;
+}
+
+const { title, month, year, cropYear, slug } = Astro.props;
+---
+
+<a
+  href={`/archive/${slug}`}
+  class="block bg-card border border-border rounded-lg p-5 hover:border-secondary transition-colors group"
+>
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="font-semibold group-hover:text-primary transition-colors">{month} {year}</h3>
+      <p class="text-sm text-secondary mt-0.5">{cropYear} Crop Year</p>
+    </div>
+    <span class="text-secondary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+  </div>
+</a>

@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const reports = await getCollection('reports');
+const sorted = reports.sort((a, b) => {
+  const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May', 'June', 'July'];
+  if (a.data.cropYear !== b.data.cropYear) {
+    return b.data.cropYear.localeCompare(a.data.cropYear);
+  }
+  return monthOrder.indexOf(b.data.month) - monthOrder.indexOf(a.data.month);
+});
+
+const grouped = sorted.reduce((acc, report) => {
+  const key = report.data.cropYear;
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(report);
+  return acc;
+}, {} as Record<string, typeof sorted>);
+---
+
+<BaseLayout title="Report Archive | Almond Position Report">
+  <section class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight">Report Archive</h1>
+    <p class="text-secondary mt-2">
+      Monthly almond position reports covering the Almond Board of California crop year (August through July).
+    </p>
+  </section>
+
+  {Object.entries(grouped).map(([cropYear, reports]) => (
+    <section class="mb-10">
+      <h2 class="text-lg font-semibold mb-4 pb-2 border-b border-border">
+        {cropYear} Crop Year
+      </h2>
+      <div class="grid gap-3">
+        {reports.map((report) => (
+          <a
+            href={`/archive/${report.id}`}
+            class="flex items-center justify-between bg-card border border-border rounded-lg p-4 hover:border-secondary transition-colors group"
+          >
+            <div>
+              <span class="font-semibold">{report.data.month} {report.data.year}</span>
+              <span class="text-sm text-secondary ml-3">Released {report.data.releaseDate}</span>
+            </div>
+            <span class="text-secondary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  ))}
+</BaseLayout>

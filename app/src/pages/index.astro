@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import StatCard from '../components/StatCard.astro';
+import DataTable from '../components/DataTable.astro';
+import { getMonthData, formatLbsShort, calcYoyChange } from '../data/utils';
+import { getCollection } from 'astro:content';
+
+const reports = await getCollection('reports');
+const sorted = reports.sort((a, b) => {
+  const dateA = new Date(`${a.data.year}-${a.data.month}-01`);
+  const dateB = new Date(`${b.data.year}-${b.data.month}-01`);
+  return dateB.getTime() - dateA.getTime();
+});
+const latest = sorted[0];
+
+const currentData = getMonthData('2025-crop', latest.data.dataMonth);
+const priorData = getMonthData('2024-crop', latest.data.dataMonth);
+---
+
+<BaseLayout title="Almond Position Report">
+  <section class="mb-12">
+    <h1 class="text-3xl font-bold tracking-tight">Almond Position Report</h1>
+    <p class="text-secondary mt-2 max-w-2xl">
+      Monthly market analysis based on data from the Almond Board of California.
+      Tracking shipments, receipts, commitments, and inventory for the California almond industry.
+    </p>
+  </section>
+
+  {latest && currentData && priorData && (
+    <section class="mb-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold">Latest Report: {latest.data.month} {latest.data.year}</h2>
+        <a href={`/archive/${latest.id}`} class="text-sm font-medium text-secondary hover:text-primary transition-colors">
+          Read full report &rarr;
+        </a>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="FTM Shipments"
+          value={formatLbsShort(currentData.ftmShipments)}
+          subtext={`${latest.data.month} ${latest.data.year}`}
+          change={calcYoyChange(currentData.ftmShipments, priorData.ftmShipments)}
+        />
+        <StatCard
+          label="YTD Shipments"
+          value={formatLbsShort(currentData.ytdShipments)}
+          subtext="Aug–present"
+          change={calcYoyChange(currentData.ytdShipments, priorData.ytdShipments)}
+        />
+        <StatCard
+          label="Commitments"
+          value={formatLbsShort(currentData.commitments)}
+          change={calcYoyChange(currentData.commitments, priorData.commitments)}
+        />
+        <StatCard
+          label="Uncommitted"
+          value={formatLbsShort(currentData.uncommittedInventory)}
+          change={calcYoyChange(currentData.uncommittedInventory, priorData.uncommittedInventory)}
+        />
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6">
+        <h3 class="font-semibold mb-4">{latest.data.month} Shipment Report Flash</h3>
+        <DataTable
+          currentData={currentData}
+          priorData={priorData}
+          currentCropLabel={`${latest.data.month} '${String(latest.data.year).slice(2)} (2025 Crop)`}
+          priorCropLabel={`${latest.data.month} '${String(latest.data.year - 1).slice(2)} (2024 Crop)`}
+        />
+      </div>
+    </section>
+  )}
+
+  <section class="mb-12">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-semibold">Recent Reports</h2>
+      <a href="/archive" class="text-sm font-medium text-secondary hover:text-primary transition-colors">
+        View all &rarr;
+      </a>
+    </div>
+    <div class="grid gap-3">
+      {sorted.slice(0, 5).map((report) => (
+        <a
+          href={`/archive/${report.id}`}
+          class="flex items-center justify-between bg-card border border-border rounded-lg p-4 hover:border-secondary transition-colors group"
+        >
+          <div>
+            <span class="font-semibold">{report.data.month} {report.data.year}</span>
+            <span class="text-sm text-secondary ml-3">{report.data.cropYear} Crop Year</span>
+          </div>
+          <span class="text-secondary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

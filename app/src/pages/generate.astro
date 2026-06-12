@@ -1,0 +1,314 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const months = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May', 'June', 'July'];
+
+const now = new Date();
+const currentMonthIndex = now.getMonth();
+const prevMonthIndex = currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
+const defaultMonth = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][prevMonthIndex];
+const defaultYear = prevMonthIndex === 11 ? now.getFullYear() - 1 : now.getFullYear();
+
+const abcSchedule: Record<string, string> = {
+  'August': '2nd week of September',
+  'September': '2nd week of October',
+  'October': '2nd week of November',
+  'November': '2nd week of December',
+  'December': '2nd week of January',
+  'January': '2nd week of February',
+  'February': '2nd week of March',
+  'March': '2nd week of April',
+  'April': '2nd week of May',
+  'May': '2nd week of June',
+  'June': '2nd week of July',
+  'July': '2nd week of August',
+};
+---
+
+<BaseLayout title="Generate Report | Almond Position Report">
+  <section class="max-w-2xl">
+    <h1 class="text-3xl font-bold tracking-tight mb-2">Generate Report</h1>
+    <p class="text-secondary mb-8">
+      Automatically generate a monthly position report. The pipeline fetches the ABC PDF,
+      extracts data, calculates derived metrics, and generates the narrative using AI.
+    </p>
+
+    <!-- Generator Card -->
+    <div class="bg-card border border-border rounded-lg p-6 mb-6">
+      <h2 class="font-semibold mb-4">Report Generator</h2>
+
+      <div class="flex gap-4 mb-6">
+        <div class="flex-1">
+          <label for="month-select" class="block text-sm font-medium mb-1.5">Month</label>
+          <select
+            id="month-select"
+            class="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            {months.map((m) => (
+              <option value={m} selected={m === defaultMonth}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div class="w-28">
+          <label for="year-input" class="block text-sm font-medium mb-1.5">Year</label>
+          <input
+            type="number"
+            id="year-input"
+            value={defaultYear}
+            min="2024"
+            max="2030"
+            class="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
+
+      <button
+        id="generate-btn"
+        class="w-full bg-primary text-card font-medium py-2.5 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm"
+      >
+        Generate Report
+      </button>
+
+      <!-- Status area -->
+      <div id="status-area" class="hidden mt-4">
+        <div class="bg-bg border border-border rounded-lg p-4">
+          <div class="flex items-center gap-3">
+            <div id="status-spinner" class="hidden">
+              <svg class="animate-spin h-5 w-5 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+            <div id="status-icon-success" class="hidden text-positive font-bold text-lg">&#10003;</div>
+            <div id="status-icon-error" class="hidden text-negative font-bold text-lg">&#10007;</div>
+            <div>
+              <p id="status-message" class="text-sm font-medium">Initializing...</p>
+              <p id="status-detail" class="text-xs text-secondary mt-0.5"></p>
+            </div>
+          </div>
+
+          <!-- Pipeline steps -->
+          <div id="pipeline-steps" class="mt-4 space-y-2 text-xs">
+            <div class="flex items-center gap-2" data-step="trigger">
+              <span class="step-icon w-5 h-5 rounded-full bg-border flex items-center justify-center text-[10px]">1</span>
+              <span>Triggering GitHub Actions workflow</span>
+            </div>
+            <div class="flex items-center gap-2" data-step="fetch">
+              <span class="step-icon w-5 h-5 rounded-full bg-border flex items-center justify-center text-[10px]">2</span>
+              <span>Fetching and parsing ABC PDF</span>
+            </div>
+            <div class="flex items-center gap-2" data-step="calculate">
+              <span class="step-icon w-5 h-5 rounded-full bg-border flex items-center justify-center text-[10px]">3</span>
+              <span>Calculating FTM and derived metrics</span>
+            </div>
+            <div class="flex items-center gap-2" data-step="narrative">
+              <span class="step-icon w-5 h-5 rounded-full bg-border flex items-center justify-center text-[10px]">4</span>
+              <span>Generating narrative with Claude AI</span>
+            </div>
+            <div class="flex items-center gap-2" data-step="commit">
+              <span class="step-icon w-5 h-5 rounded-full bg-border flex items-center justify-center text-[10px]">5</span>
+              <span>Committing report and deploying</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Release Schedule -->
+    <div class="bg-card border border-border rounded-lg p-6 mb-6">
+      <h2 class="font-semibold mb-4">ABC Release Schedule</h2>
+      <p class="text-sm text-secondary mb-4">
+        The Almond Board of California publishes position reports monthly, typically in the second week of the following month.
+      </p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+        {Object.entries(abcSchedule).map(([month, release]) => (
+          <div class="py-1">
+            <span class="font-medium">{month}:</span>
+            <span class="text-secondary ml-1">{release}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="bg-card border border-border rounded-lg p-6">
+      <h2 class="font-semibold mb-4">How It Works</h2>
+      <ol class="space-y-3 text-sm">
+        <li class="flex gap-3">
+          <span class="flex-none w-6 h-6 rounded-full bg-bg border border-border flex items-center justify-center text-xs font-semibold">1</span>
+          <div>
+            <span class="font-medium">Trigger</span>
+            <p class="text-secondary mt-0.5">The Generate button calls <code class="bg-bg px-1 py-0.5 rounded text-xs">/api/generate</code> which triggers a GitHub Actions workflow.</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-none w-6 h-6 rounded-full bg-bg border border-border flex items-center justify-center text-xs font-semibold">2</span>
+          <div>
+            <span class="font-medium">Extract</span>
+            <p class="text-secondary mt-0.5">The pipeline fetches the ABC position report PDF and extracts all 7 metrics for both crop years using Claude AI.</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-none w-6 h-6 rounded-full bg-bg border border-border flex items-center justify-center text-xs font-semibold">3</span>
+          <div>
+            <span class="font-medium">Calculate</span>
+            <p class="text-secondary mt-0.5">FTM values are derived (current YTD minus prior YTD) and the historical data store is updated.</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-none w-6 h-6 rounded-full bg-bg border border-border flex items-center justify-center text-xs font-semibold">4</span>
+          <div>
+            <span class="font-medium">Generate</span>
+            <p class="text-secondary mt-0.5">Claude AI writes the report narrative in brand voice, with all four sections: Receipts, Shipments, Sales & Commitments, and In a Nutshell.</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-none w-6 h-6 rounded-full bg-bg border border-border flex items-center justify-center text-xs font-semibold">5</span>
+          <div>
+            <span class="font-medium">Publish</span>
+            <p class="text-secondary mt-0.5">The MDX report and updated data are committed to the repo, which triggers a Vercel redeploy automatically.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Environment variables reminder -->
+    <div class="mt-6 p-4 bg-bg border border-border rounded-lg">
+      <p class="text-sm text-secondary">
+        <strong class="text-primary">Required secrets:</strong>
+        Set <code class="bg-card px-1 py-0.5 rounded text-xs">GITHUB_TOKEN</code>,
+        <code class="bg-card px-1 py-0.5 rounded text-xs">GITHUB_OWNER</code>, and
+        <code class="bg-card px-1 py-0.5 rounded text-xs">GITHUB_REPO</code> in Vercel environment variables,
+        and <code class="bg-card px-1 py-0.5 rounded text-xs">ANTHROPIC_API_KEY</code> in GitHub Actions secrets.
+      </p>
+    </div>
+  </section>
+
+  <script>
+    const btn = document.getElementById('generate-btn') as HTMLButtonElement;
+    const monthSelect = document.getElementById('month-select') as HTMLSelectElement;
+    const yearInput = document.getElementById('year-input') as HTMLInputElement;
+    const statusArea = document.getElementById('status-area')!;
+    const statusMessage = document.getElementById('status-message')!;
+    const statusDetail = document.getElementById('status-detail')!;
+    const spinner = document.getElementById('status-spinner')!;
+    const iconSuccess = document.getElementById('status-icon-success')!;
+    const iconError = document.getElementById('status-icon-error')!;
+
+    function setStatus(msg: string, detail: string, state: 'loading' | 'success' | 'error') {
+      statusArea.classList.remove('hidden');
+      statusMessage.textContent = msg;
+      statusDetail.textContent = detail;
+      spinner.classList.toggle('hidden', state !== 'loading');
+      iconSuccess.classList.toggle('hidden', state !== 'success');
+      iconError.classList.toggle('hidden', state !== 'error');
+    }
+
+    function activateStep(index: number) {
+      const steps = document.querySelectorAll('#pipeline-steps [data-step]');
+      steps.forEach((step, i) => {
+        const icon = step.querySelector('.step-icon') as HTMLElement;
+        if (i < index) {
+          icon.style.backgroundColor = 'var(--color-positive)';
+          icon.style.color = 'white';
+        } else if (i === index) {
+          icon.style.backgroundColor = 'var(--color-primary)';
+          icon.style.color = 'white';
+        } else {
+          icon.style.backgroundColor = '';
+          icon.style.color = '';
+        }
+      });
+    }
+
+    btn.addEventListener('click', async () => {
+      const month = monthSelect.value;
+      const year = yearInput.value;
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      setStatus('Triggering workflow...', `Generating ${month} ${year} report`, 'loading');
+      activateStep(0);
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ month, year: parseInt(year) }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to trigger generation');
+        }
+
+        setStatus('Workflow triggered', 'Pipeline is running in GitHub Actions...', 'loading');
+        activateStep(1);
+
+        // Poll for status
+        let pollCount = 0;
+        const maxPolls = 60; // 5 minutes at 5s intervals
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+
+          // Simulate step progression based on time
+          if (pollCount >= 3) activateStep(2);
+          if (pollCount >= 6) activateStep(3);
+          if (pollCount >= 12) activateStep(4);
+
+          try {
+            const statusResp = await fetch('/api/status');
+            const statusData = await statusResp.json();
+
+            if (statusData.status === 'completed') {
+              clearInterval(pollInterval);
+              if (statusData.conclusion === 'success') {
+                activateStep(5);
+                setStatus(
+                  'Report generated successfully!',
+                  'The site will redeploy automatically. Check the archive in a moment.',
+                  'success'
+                );
+                btn.textContent = 'Generate Report';
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+              } else {
+                setStatus(
+                  'Workflow failed',
+                  `Conclusion: ${statusData.conclusion}. Check GitHub Actions for details.`,
+                  'error'
+                );
+                btn.textContent = 'Retry';
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+              }
+            }
+          } catch {
+            // Polling error, continue
+          }
+
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            setStatus(
+              'Status check timed out',
+              'The workflow may still be running. Check GitHub Actions directly.',
+              'error'
+            );
+            btn.textContent = 'Generate Report';
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+          }
+        }, 5000);
+
+      } catch (err: any) {
+        setStatus('Generation failed', err.message, 'error');
+        btn.textContent = 'Retry';
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    });
+  </script>
+</BaseLayout>

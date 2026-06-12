@@ -1,0 +1,59 @@
+---
+import { formatLbs, calcYoyChange, formatPct, type MonthData } from '../data/utils';
+
+interface Props {
+  currentData: MonthData;
+  priorData: MonthData;
+  currentCropLabel: string;
+  priorCropLabel: string;
+}
+
+const { currentData, priorData, currentCropLabel, priorCropLabel } = Astro.props;
+
+const rows = [
+  { label: 'FTM Receipts', key: 'ftmReceipts' as const },
+  { label: 'YTD Receipts', key: 'ytdReceipts' as const },
+  { label: 'FTM Shipments', key: 'ftmShipments' as const },
+  { label: 'YTD Shipments', key: 'ytdShipments' as const },
+  { label: 'Sales', key: 'sales' as const },
+  { label: 'Commitments', key: 'commitments' as const },
+  { label: 'Uncommitted Inventory', key: 'uncommittedInventory' as const },
+];
+---
+
+<div class="overflow-x-auto">
+  <table class="w-full border-collapse text-sm">
+    <thead>
+      <tr class="border-b-2 border-primary">
+        <th class="text-left py-3 pr-4 font-semibold">Categories</th>
+        <th class="text-right py-3 px-4 font-semibold">{currentCropLabel}</th>
+        <th class="text-right py-3 px-4 font-semibold">{priorCropLabel}</th>
+        <th class="text-right py-3 pl-4 font-semibold">% YOY Change</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row, i) => {
+        const current = currentData[row.key];
+        const prior = priorData[row.key];
+        const yoy = calcYoyChange(current, prior);
+        return (
+          <tr class:list={['border-b border-border', i % 2 === 0 ? 'bg-card' : 'bg-bg']}>
+            <td class="py-2.5 pr-4 font-medium">{row.label}</td>
+            <td class="text-right py-2.5 px-4 tabular-nums">{formatLbs(current)}</td>
+            <td class="text-right py-2.5 px-4 tabular-nums">{formatLbs(prior)}</td>
+            <td class:list={[
+              'text-right py-2.5 pl-4 font-semibold tabular-nums',
+              yoy !== null && yoy > 0 ? 'text-positive' : '',
+              yoy !== null && yoy < 0 ? 'text-negative' : '',
+            ]}>
+              {formatPct(yoy)}
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+  <p class="mt-3 text-xs text-secondary">
+    All values in lbs. | FTM = For the Month | YTD = Year to Date (Aug 1 – end of month)
+  </p>
+</div>

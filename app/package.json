@@ -1,0 +1,26 @@
+{
+  "name": "app",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.83",
+    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/vercel": "^10.0.8",
+    "@octokit/rest": "^22.0.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "ai": "^6.0.202",
+    "astro": "^6.4.6",
+    "pdfjs-dist": "^6.0.227",
+    "tailwindcss": "^4.3.0",
+    "tsx": "^4.22.4"
+  }
+}
