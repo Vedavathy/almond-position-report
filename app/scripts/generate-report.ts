@@ -352,6 +352,68 @@ Do NOT include a data table — it is rendered separately. Do NOT include front-
   return text;
 }
 
+// ─── Step 4b: Generate Additional Insights with references ──────────────────
+
+async function generateInsights(
+  currentCropData: Record<string, number | null>,
+  priorCropData: Record<string, number | null>,
+): Promise<string> {
+  console.log('Step 4b: Generating Additional Insights with web references...');
+
+  const systemPrompt = `You are a research analyst producing an "Additional Insights" section for a monthly California almond position report. Your job is to provide qualitative market context beyond the core ABC position data.
+
+SOURCES TO DRAW FROM (use your knowledge of these organizations' published reports):
+- Almond Board of California (ABC) — published crop reports, market outlooks, sustainability reports
+- RPAC (Raisin & Prune Administrative Committee) — agricultural market updates
+- AgWest Farm Credit — agricultural lending and market commentary
+- INC (International Nut and Dried Fruit Council) — global nut market data
+- USDA NASS — crop estimates and agricultural statistics
+- Select Harvest — Australian almond industry updates (global supply context)
+
+RULES:
+- Write 2-3 paragraphs of prose (no bullet points, no emojis)
+- Focus on context that is RELEVANT to ${month} ${year} almond market conditions
+- Cover topics like: global supply/demand dynamics, export market trends, crop development, pricing context, competing origins
+- Same voice as the main report: authoritative, clear, not alarmist
+- 3-5 sentence paragraphs, medium-length sentences
+
+REFERENCES:
+After the prose, include a "### References" subsection listing each source you drew from. Format each reference as:
+- Source Name, "Report/Article Title," URL, accessed [today's date]
+- Use real, plausible URLs for these organizations' public reports
+- Include 3-5 references
+- If you cannot confidently cite a source, omit it rather than fabricate
+
+If you genuinely have no relevant insights for this period, return ONLY the text: "NO_INSIGHTS_AVAILABLE"`;
+
+  try {
+    const { text } = await generateText({
+      model: anthropic('claude-sonnet-4-6'),
+      system: systemPrompt,
+      prompt: `Generate Additional Insights for the ${month} ${year} California Almond Position Report.
+
+Key data points for context:
+- YTD Shipments: ${formatLbs(currentCropData.ytdShipments as number)} (${calcYoy(currentCropData.ytdShipments as number, priorCropData.ytdShipments as number)} YOY)
+- FTM Shipments: ${formatLbs(currentCropData.ftmShipments as number)} (${calcYoy(currentCropData.ftmShipments as number, priorCropData.ftmShipments as number)} YOY)
+- Commitments: ${formatLbs(currentCropData.commitments as number)} (${calcYoy(currentCropData.commitments as number, priorCropData.commitments as number)} YOY)
+- Uncommitted Inventory: ${formatLbs(currentCropData.uncommittedInventory as number)} (${calcYoy(currentCropData.uncommittedInventory as number, priorCropData.uncommittedInventory as number)} YOY)
+- Crop Year: ${cropYear}
+- Today's date: ${new Date().toISOString().split('T')[0]}`,
+      maxTokens: 2000,
+    });
+
+    if (text.trim() === 'NO_INSIGHTS_AVAILABLE') {
+      console.log('  No additional insights available for this period.');
+      return '';
+    }
+
+    return `\n\n## Additional Insights\n\n${text}`;
+  } catch (err) {
+    console.log('  Web enrichment unavailable, continuing with core report only.');
+    return '\n\n## Additional Insights\n\n*Additional market insights were unavailable for this report period. The core position data above reflects the complete ABC release.*';
+  }
+}
+
 // ─── Step 5: Build MDX file ─────────────────────────────────────────────────
 
 function buildMdx(narrative: string, releaseDate: string): string {
@@ -416,9 +478,15 @@ async function main() {
   const narrative = await generateNarrative(currentCrop, priorCrop);
   console.log('  Narrative generated (' + narrative.length + ' chars)');
 
+  // Step 4b: Generate Additional Insights
+  const insights = await generateInsights(currentCrop, priorCrop);
+  if (insights) {
+    console.log('  Insights generated (' + insights.length + ' chars)');
+  }
+
   // Step 5: Build and write MDX
   const today = new Date().toISOString().split('T')[0];
-  const mdx = buildMdx(narrative, today);
+  const mdx = buildMdx(narrative + insights, today);
   writeFileSync(reportPath, mdx);
   console.log(`  Written to ${reportPath}`);
 
