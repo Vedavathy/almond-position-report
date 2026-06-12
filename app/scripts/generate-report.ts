@@ -358,59 +358,66 @@ async function generateInsights(
   currentCropData: Record<string, number | null>,
   priorCropData: Record<string, number | null>,
 ): Promise<string> {
-  console.log('Step 4b: Generating Additional Insights with web references...');
+  console.log('Step 4b: Generating Additional Market Insights (US-04)...');
 
-  const systemPrompt = `You are a research analyst producing an "Additional Insights" section for a monthly California almond position report. Your job is to provide qualitative market context beyond the core ABC position data.
+  const generationDate = new Date().toISOString().split('T')[0];
 
-SOURCES TO DRAW FROM (use your knowledge of these organizations' published reports):
-- Almond Board of California (ABC) — published crop reports, market outlooks, sustainability reports
-- RPAC (Raisin & Prune Administrative Committee) — agricultural market updates
-- AgWest Farm Credit — agricultural lending and market commentary
-- INC (International Nut and Dried Fruit Council) — global nut market data
-- USDA NASS — crop estimates and agricultural statistics
-- Select Harvest — Australian almond industry updates (global supply context)
+  const systemPrompt = `You are a research analyst producing an "Additional Market Insights" section for a monthly California almond position report. Your job is to surface 3–6 concise, high-signal insights that are NOT reported in the ABC position report, each with a clear directional bearing on almond sales volumes, committed positions, or price direction.
 
-RULES:
-- Write 2-3 paragraphs of prose (no bullet points, no emojis)
-- Focus on context that is RELEVANT to ${month} ${year} almond market conditions
-- Cover topics like: global supply/demand dynamics, export market trends, crop development, pricing context, competing origins
-- Same voice as the main report: authoritative, clear, not alarmist
-- 3-5 sentence paragraphs, medium-length sentences
+INSIGHT CATEGORIES (in priority order):
+1. Competing-origin supply disruptions — weather, harvest quality, or logistics issues in Australia, Spain, or Iran that redirect buyer demand to U.S. supply.
+2. Key-market demand signals — import data, purchasing pauses, or re-entry signals from India, China, UAE, or Southeast Asia not reflected in the current month's ABC shipments.
+3. Pricing dynamics — handler or broker commentary on benchmark prices, basis levels, or contract terms; spot market tightness or oversupply signals.
+4. Crop outlook from non-ABC sources — USDA, Land IQ, Blue Diamond, or handler estimates for the upcoming or current crop year, particularly where they diverge from ABC projections.
+5. Structural or regulatory changes — discontinued data series (e.g., NASS Objective Estimate), trade policy shifts, tariff changes, or new import regulations in key markets.
+6. Relevant current affairs — macroeconomic events, currency moves, or geopolitical developments with a traceable impact on almond trade flows or buyer behaviour.
 
-REFERENCES:
-After the prose, include a "### References" subsection listing each source you drew from. Format each reference as:
-- Source Name, "Report/Article Title," URL, accessed [today's date]
-- Use real, plausible URLs for these organizations' public reports
-- Include 3-5 references
-- If you cannot confidently cite a source, omit it rather than fabricate
+QUALITY FILTER — every insight MUST pass ALL of these:
+- EXTERNAL: the fact must NOT appear in or restate data from the ABC position report. If the ABC report already covers it, exclude it.
+- DIRECTIONAL: must have a stated impact — bullish, bearish, or structural — on at least one of: shipment volumes, committed positions, uncommitted inventory, or benchmark almond prices.
+- CURRENT: must reference information published within 45 days of ${generationDate}.
+- SOURCED: must come from a real, identifiable publication or data release.
 
-If you genuinely have no relevant insights for this period, return ONLY the text: "NO_INSIGHTS_AVAILABLE"`;
+FORMAT for each insight:
+**Bold 3–6 word headline** followed by 1–3 sentences of explanation. No bullet points within the body. Write in the same authoritative, non-alarmist voice as the main report.
+
+After all insights, include a "### References" subsection. Each reference on its own line:
+- Source Name, "Report/Article Title," URL, date accessed ${generationDate}
+
+Only cite sources you are confident exist. Omit rather than fabricate.
+
+If you cannot produce at least 3 insights that pass the quality filter, return ONLY: "NO_INSIGHTS_AVAILABLE"`;
 
   try {
     const { text } = await generateText({
       model: anthropic('claude-sonnet-4-6'),
       system: systemPrompt,
-      prompt: `Generate Additional Insights for the ${month} ${year} California Almond Position Report.
+      prompt: `Generate 3–6 Additional Market Insights for the ${month} ${year} California Almond Position Report.
 
-Key data points for context:
+Context from the ABC report (DO NOT restate these — they are already covered):
 - YTD Shipments: ${formatLbs(currentCropData.ytdShipments as number)} (${calcYoy(currentCropData.ytdShipments as number, priorCropData.ytdShipments as number)} YOY)
 - FTM Shipments: ${formatLbs(currentCropData.ftmShipments as number)} (${calcYoy(currentCropData.ftmShipments as number, priorCropData.ftmShipments as number)} YOY)
 - Commitments: ${formatLbs(currentCropData.commitments as number)} (${calcYoy(currentCropData.commitments as number, priorCropData.commitments as number)} YOY)
 - Uncommitted Inventory: ${formatLbs(currentCropData.uncommittedInventory as number)} (${calcYoy(currentCropData.uncommittedInventory as number, priorCropData.uncommittedInventory as number)} YOY)
+- Sales: ${formatLbs(currentCropData.sales as number)} (${calcYoy(currentCropData.sales as number, priorCropData.sales as number)} YOY)
 - Crop Year: ${cropYear}
-- Today's date: ${new Date().toISOString().split('T')[0]}`,
-      maxTokens: 2000,
+- Generation date: ${generationDate}`,
+      maxTokens: 2500,
     });
 
     if (text.trim() === 'NO_INSIGHTS_AVAILABLE') {
-      console.log('  No additional insights available for this period.');
+      console.log('  No qualifying insights found for this period.');
       return '';
     }
 
-    return `\n\n## Additional Insights\n\n${text}`;
+    const trimmed = text.trim();
+    if (/^#{1,2}\s+Additional\s+Market\s+Insights/i.test(trimmed)) {
+      return `\n\n${trimmed}`;
+    }
+    return `\n\n## Additional Market Insights\n\n${trimmed}`;
   } catch (err) {
-    console.log('  Web enrichment unavailable, continuing with core report only.');
-    return '\n\n## Additional Insights\n\n*Additional market insights were unavailable for this report period. The core position data above reflects the complete ABC release.*';
+    console.log('  Insight generation unavailable, continuing with core report only.');
+    return '\n\n## Additional Market Insights\n\n*Additional market insights were unavailable for this report period. The core position data above reflects the complete ABC release.*';
   }
 }
 

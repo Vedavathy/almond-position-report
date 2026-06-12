@@ -1,5 +1,6 @@
 ---
-export const prerender = true;
+export const prerender = false;
+return Astro.redirect('/', 302);
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const months = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May', 'June', 'July'];
