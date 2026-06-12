@@ -112,6 +112,17 @@
           "commitments": 438256714,
           "uncommittedInventory": 469542165,
           "sales": 124943804
+        },
+        "jun-2026": {
+          "month": "June",
+          "year": 2026,
+          "ytdReceipts": 2692145000,
+          "ftmReceipts": 1308039,
+          "ytdShipments": 2418350000,
+          "ftmShipments": 205322357,
+          "commitments": 395120000,
+          "uncommittedInventory": 328217000,
+          "sales": 162185643
         }
       }
     },
@@ -227,6 +238,17 @@
           "commitments": 402307610,
           "uncommittedInventory": 495219179,
           "sales": 102797552
+        },
+        "jun-2026": {
+          "month": "June",
+          "year": 2026,
+          "ytdReceipts": 2713250000,
+          "ftmReceipts": 1571642,
+          "ytdShipments": 2461890000,
+          "ftmShipments": 199321797,
+          "commitments": 370450000,
+          "uncommittedInventory": 330102000,
+          "sales": 167463587
         }
       }
     }

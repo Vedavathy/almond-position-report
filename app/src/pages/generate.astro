@@ -63,6 +63,11 @@ const abcSchedule: Record<string, string> = {
         </div>
       </div>
 
+      <!-- Release date guard -->
+      <div id="release-guard" class="hidden mb-4 p-3 bg-[#FFF8E1] border border-[#FFE082] rounded-lg">
+        <p class="text-sm font-medium text-[#6D4C00]" id="guard-message"></p>
+      </div>
+
       <button
         id="generate-btn"
         class="w-full bg-primary text-card font-medium py-2.5 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm"
@@ -195,6 +200,40 @@ const abcSchedule: Record<string, string> = {
     const spinner = document.getElementById('status-spinner')!;
     const iconSuccess = document.getElementById('status-icon-success')!;
     const iconError = document.getElementById('status-icon-error')!;
+    const releaseGuard = document.getElementById('release-guard')!;
+    const guardMessage = document.getElementById('guard-message')!;
+
+    const calendarMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function getExpectedReleaseDate(month: string, year: number): Date {
+      const monthIndex = calendarMonths.indexOf(month);
+      const releaseMonthIndex = (monthIndex + 1) % 12;
+      const releaseYear = monthIndex === 11 ? year + 1 : year;
+      return new Date(releaseYear, releaseMonthIndex, 10);
+    }
+
+    function checkReleaseGuard() {
+      const month = monthSelect.value;
+      const year = parseInt(yearInput.value);
+      const now = new Date();
+      const expectedRelease = getExpectedReleaseDate(month, year);
+
+      if (now < expectedRelease) {
+        const formatted = expectedRelease.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        guardMessage.textContent = `Next report expected: ~${formatted}. ABC has not yet published the ${month} ${year} position report.`;
+        releaseGuard.classList.remove('hidden');
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        releaseGuard.classList.add('hidden');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    monthSelect.addEventListener('change', checkReleaseGuard);
+    yearInput.addEventListener('input', checkReleaseGuard);
+    checkReleaseGuard();
 
     function setStatus(msg: string, detail: string, state: 'loading' | 'success' | 'error') {
       statusArea.classList.remove('hidden');
