@@ -384,17 +384,33 @@ async function main() {
   }
 
   // Step 2: Fetch and extract data
-  const pdfBuffer = await fetchAbcPdf();
-  const { currentCrop, priorCrop } = await extractDataWithClaude(pdfBuffer, historicalData);
+  let currentCrop: Record<string, number | null>;
+  let priorCrop: Record<string, number | null>;
 
-  console.log('\nExtracted data:');
+  const existingCurrent = historicalData.cropYears[currentCropKey]?.months[dataMonthKey];
+  const existingPrior = historicalData.cropYears[priorCropKey]?.months[dataMonthKey];
+
+  if (existingCurrent && existingPrior) {
+    console.log('  Data already exists in historical store, skipping PDF extraction.');
+    const { month: _m1, year: _y1, ...currentRest } = existingCurrent;
+    const { month: _m2, year: _y2, ...priorRest } = existingPrior;
+    currentCrop = currentRest;
+    priorCrop = priorRest;
+  } else {
+    const pdfBuffer = await fetchAbcPdf();
+    const extracted = await extractDataWithClaude(pdfBuffer, historicalData);
+    currentCrop = extracted.currentCrop;
+    priorCrop = extracted.priorCrop;
+
+    // Step 3: Update historical data
+    const updatedData = updateHistoricalData(historicalData, currentCrop, priorCrop);
+    writeFileSync(dataPath, JSON.stringify(updatedData, null, 2) + '\n');
+    console.log(`  Updated ${dataPath}`);
+  }
+
+  console.log('\nData:');
   console.log('  Current crop:', JSON.stringify(currentCrop, null, 2));
   console.log('  Prior crop:', JSON.stringify(priorCrop, null, 2));
-
-  // Step 3: Update historical data
-  const updatedData = updateHistoricalData(historicalData, currentCrop, priorCrop);
-  writeFileSync(dataPath, JSON.stringify(updatedData, null, 2) + '\n');
-  console.log(`  Updated ${dataPath}`);
 
   // Step 4: Generate narrative
   const narrative = await generateNarrative(currentCrop, priorCrop);
