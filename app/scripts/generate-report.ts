@@ -364,6 +364,8 @@ async function generateInsights(
 
   const systemPrompt = `You are a research analyst producing an "Additional Market Insights" section for a monthly California almond position report. Your job is to surface 3–6 concise, high-signal insights that are NOT reported in the ABC position report, each with a clear directional bearing on almond sales volumes, committed positions, or price direction.
 
+You are drawing on your training knowledge of the almond industry, global trade dynamics, and agricultural markets. Use facts and dynamics you are confident are accurate for the ${cropYear} crop year period.
+
 INSIGHT CATEGORIES (in priority order):
 1. Competing-origin supply disruptions — weather, harvest quality, or logistics issues in Australia, Spain, or Iran that redirect buyer demand to U.S. supply.
 2. Key-market demand signals — import data, purchasing pauses, or re-entry signals from India, China, UAE, or Southeast Asia not reflected in the current month's ABC shipments.
@@ -374,19 +376,18 @@ INSIGHT CATEGORIES (in priority order):
 
 QUALITY FILTER — every insight MUST pass ALL of these:
 - EXTERNAL: the fact must NOT appear in or restate data from the ABC position report. If the ABC report already covers it, exclude it.
-- DIRECTIONAL: must have a stated impact — bullish, bearish, or structural — on at least one of: shipment volumes, committed positions, uncommitted inventory, or benchmark almond prices.
-- CURRENT: must reference information published within 45 days of ${generationDate}.
-- SOURCED: must come from a real, identifiable publication or data release.
+- DIRECTIONAL: must have a stated impact — bullish, bearish, or structural — on at least one of: shipment volumes, committed positions, uncommitted inventory, or benchmark almond prices. State the direction explicitly (e.g., "bullish for prices" or "bearish for export volumes").
+- RELEVANT: must be directly applicable to the ${month} ${year} market period and the ${cropYear} crop year.
 
 FORMAT for each insight:
 **Bold 3–6 word headline** followed by 1–3 sentences of explanation. No bullet points within the body. Write in the same authoritative, non-alarmist voice as the main report.
 
 After all insights, include a "### References" subsection. Each reference on its own line:
-- Source Name, "Report/Article Title," URL, date accessed ${generationDate}
+- Source Name, "Report/Publication Title," URL (use the organization's real base URL for the relevant report section)
 
-Only cite sources you are confident exist. Omit rather than fabricate.
+Do NOT fabricate specific article titles, dates, or URLs you are not confident exist. Use general landing pages for the organization's reports section when you cannot confirm a specific URL.
 
-If you cannot produce at least 3 insights that pass the quality filter, return ONLY: "NO_INSIGHTS_AVAILABLE"`;
+CRITICAL: Your response must contain ONLY the insights and references. No meta-commentary, no explanations about your limitations, no recommendations to the user. Either produce the insights or return exactly this string and nothing else: NO_INSIGHTS_AVAILABLE`;
 
   try {
     const { text } = await generateText({
@@ -405,7 +406,7 @@ Context from the ABC report (DO NOT restate these — they are already covered):
       maxTokens: 2500,
     });
 
-    if (text.trim() === 'NO_INSIGHTS_AVAILABLE') {
+    if (text.includes('NO_INSIGHTS_AVAILABLE')) {
       console.log('  No qualifying insights found for this period.');
       return '';
     }
