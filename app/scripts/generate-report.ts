@@ -33,8 +33,8 @@ const dataMonthKey = `${monthAbbrev}-${year}`;
 
 const cropYearStart = monthIndex >= 7 ? year : year - 1; // Aug-Dec = same year, Jan-Jul = prior year
 const cropYear = `${cropYearStart}-${cropYearStart + 1}`;
-const currentCropKey = `${cropYearStart + 1}-crop`; // e.g. "2025-crop" for 2025-2026 crop year
-const priorCropKey = `${cropYearStart}-crop`;
+const currentCropKey = `${cropYearStart}-crop`; // e.g. "2025-crop" = 2025 harvest = 2025-2026 crop year
+const priorCropKey = `${cropYearStart - 1}-crop`;
 
 console.log(`\n=== Generating ${month} ${year} Position Report ===`);
 console.log(`Crop Year: ${cropYear} | Data key: ${dataMonthKey}`);
@@ -231,13 +231,13 @@ function updateHistoricalData(
 
   if (!historicalData.cropYears[currentCropKey]) {
     historicalData.cropYears[currentCropKey] = {
-      label: `${cropYear} Crop Year (${cropYearStart + 1} Crop)`,
+      label: `${cropYear} Crop Year (${cropYearStart} Crop)`,
       months: {},
     };
   }
   if (!historicalData.cropYears[priorCropKey]) {
     historicalData.cropYears[priorCropKey] = {
-      label: `${cropYearStart - 1}-${cropYearStart} Crop Year (${cropYearStart} Crop)`,
+      label: `${cropYearStart - 1}-${cropYearStart} Crop Year (${cropYearStart - 1} Crop)`,
       months: {},
     };
   }
