@@ -127,7 +127,7 @@ Return ONLY a JSON object with this exact structure (values in lbs as integers, 
 The PDF content is provided as a base64-encoded document.`;
 
     const { text } = await generateText({
-      model: anthropic('claude-sonnet-4-6-20250818'),
+      model: anthropic('claude-sonnet-4-20250514'),
       messages: [
         {
           role: 'user',
@@ -164,7 +164,7 @@ Return ONLY JSON:
 }`;
 
     const { text } = await generateText({
-      model: anthropic('claude-sonnet-4-6-20250818'),
+      model: anthropic('claude-sonnet-4-20250514'),
       prompt,
     });
 
@@ -343,7 +343,7 @@ STRUCTURE — generate these exact sections as markdown headings:
 Do NOT include a data table — it is rendered separately. Do NOT include front-matter. Start directly with ## Market Update.`;
 
   const { text } = await generateText({
-    model: anthropic('claude-sonnet-4-6-20250818'),
+    model: anthropic('claude-sonnet-4-20250514'),
     system: systemPrompt,
     prompt: `Write the narrative for the ${month} ${year} Almond Position Report using this data:\n${dataContext}`,
     maxTokens: 4000,
