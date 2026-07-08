@@ -1,43 +1,79 @@
-# Astro Starter Kit: Minimal
+# Almond Position Report
+
+Monthly market analysis tool built on data from the Almond Board of California. Tracks shipments, receipts, commitments, and inventory for the California almond industry across the crop year (August-July).
+
+## What it does
+
+- **Automated report generation**: A GitHub Actions pipeline fetches the ABC position report PDF, extracts data, calculates derived metrics (FTM, YTD, Sales), generates a narrative with Claude AI, and appends market insights with citations.
+- **Archive**: Browse all monthly reports at `/archive`, each with a summary data table and full narrative.
+- **Homepage dashboard**: Bento grid layout with latest report stats, YOY changes, and the shipment flash table.
+
+## Tech stack
+
+| Layer              | Tool                                    |
+| :----------------- | :-------------------------------------- |
+| Framework          | Astro (MDX content collection)          |
+| Styling            | Tailwind CSS v4                         |
+| Hosting            | Vercel                                  |
+| Pipeline runtime   | GitHub Actions (scheduled + on-demand)  |
+| AI narrative       | Claude API via Vercel AI SDK            |
+| PDF extraction     | Claude API (fallback from pdfjs-dist)   |
+| GitHub writes      | Octokit                                 |
+| Data store         | JSON in repo (`historical-data.json`)   |
+
+## Project structure
+
+```
+app/
+  src/
+    content/reports/     # MDX report files (may-2026.mdx, etc.)
+    data/                # historical-data.json
+    components/          # Astro components (Header, DataTable, etc.)
+    layouts/             # BaseLayout
+    pages/               # /, /archive, /archive/[slug]
+  scripts/
+    generate-report.ts   # Generation pipeline
+.github/
+  workflows/
+    generate-report.yml  # Scheduled + manual trigger
+```
+
+## Local development
 
 ```sh
-npm create astro@latest -- --template minimal
+cd app
+npm install
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+The dev server runs at `localhost:4321`.
 
-## 🚀 Project Structure
+To run the generation pipeline locally:
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```sh
+cd app
+npx tsx scripts/generate-report.ts May 2026
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+Requires `ANTHROPIC_API_KEY` set in environment.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Report generation pipeline
 
-Any static assets, like images, can be placed in the `public/` directory.
+The pipeline runs as a GitHub Actions workflow on a schedule (`cron: 5 17 10-20 * *`, i.e. 9:05 AM PST daily from the 10th-20th of each month) or via manual dispatch.
 
-## 🧞 Commands
+1. **Data check** -- if data exists in the historical store, skip PDF extraction
+2. **PDF fetch + extract** -- download ABC PDF and extract metrics with Claude API
+3. **FTM calculation** -- compute for-the-month values from YTD deltas
+4. **Narrative generation** -- Claude generates Market Update, Receipts, Shipments, Sales & Commitments, In a Nutshell sections
+5. **Market insights** -- Claude generates 3-6 external insights with directional impact and citations (US-04 spec)
+6. **MDX build** -- assemble frontmatter + narrative + insights into report file
+7. **Commit + deploy** -- push to repo, Vercel auto-redeploys
 
-All commands are run from the root of the project, from a terminal:
+## Environment variables
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Variable            | Where          | Purpose                          |
+| :------------------ | :------------- | :------------------------------- |
+| `ANTHROPIC_API_KEY` | GitHub Secrets | Claude API access for generation |
+| `GITHUB_TOKEN`      | GitHub Actions | Auto-provided for workflow       |
+| `GITHUB_OWNER`      | Vercel env     | Repo owner for API trigger       |
+| `GITHUB_REPO`       | Vercel env     | Repo name for API trigger        |
