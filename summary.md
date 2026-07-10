@@ -53,7 +53,8 @@ Each month, the Almond Board of California publishes a position report, which co
 Instructions
 
 1. If Historical Data file exists follow this: 
- - For latest month download the position report from the website: https://www.almonds.org/tools-and-resources/crop-reports/position-reports?page=0ex and store it in the folder inside the current folder named for the month (E.g. For "April Monthly position report" create folder "April 2026")
+ - For latest month download the position report from the website: https://www.almonds.org/tools-and-resources/crop-reports/position-reports?page=0 and store it in the folder inside the current folder named for the month (E.g. For "April Monthly position report" create folder "April 2026")
+ - Before concluding the latest month's report isn't published yet, follow the verification protocol in `CLAUDE.md` ("Data Fetching Reliability Notes") — a single fetch of the listing page is not sufficient evidence, since it can return stale results.
 
  Latest month data is updated according to the schedule here: ![alt text](image.png)
  - Update the Historical Data table to have data for the latest month column based on the details in section - "Historical Data - How to create"

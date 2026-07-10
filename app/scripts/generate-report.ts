@@ -7,8 +7,6 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const MONTH_ABBREVS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const CROP_YEAR_MONTHS = ['aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul'];
 
-const ABC_POSITION_REPORT_URL = 'https://www.almonds.org/tools-and-resources/crop-reports/position-reports';
-
 // ─── Step 1: Parse CLI args ─────────────────────────────────────────────────
 
 const monthArg = process.argv[2];
@@ -41,29 +39,81 @@ console.log(`Crop Year: ${cropYear} | Data key: ${dataMonthKey}`);
 console.log(`Current crop: ${currentCropKey} | Prior crop: ${priorCropKey}\n`);
 
 // ─── Step 2: Fetch and parse the ABC PDF ────────────────────────────────────
+//
+// The ABC publishes each report at an unpredictable URL of the form:
+//   https://www.almonds.org/sites/default/files/{release-YYYY}-{release-MM}/{data-YYYY}.{data-MM}_PosRpt_{random 4-digit}.pdf
+// The trailing 4-digit suffix is random/non-sequential and cannot be guessed.
+// The reliable way to find the URL is to scan the listing page's HTML for an
+// href whose {data-YYYY}.{data-MM} portion matches the target report — that
+// fragment is present in the raw href regardless of how the surrounding page
+// markup is structured, so it doesn't depend on parsing headings or DOM shape.
+//
+// IMPORTANT (see /CLAUDE.md "Data Fetching Reliability Notes"): a single fetch
+// of the listing page can return a stale/cached result even when the report is
+// already live — this caused a false "not published yet" conclusion on
+// 2026-07-09. Never treat one failed scan as proof the report isn't published;
+// retry before giving up, and never fall back to fabricating figures from
+// model training knowledge if the PDF truly can't be found.
+
+const POSITION_REPORTS_LISTING_URL = 'https://www.almonds.org/tools-and-resources/crop-reports/position-reports';
+const PDF_HREF_PATTERN = /\/sites\/default\/files\/\d{4}-\d{2}\/(\d{4})\.(\d{2})_PosRpt_?\d+\.pdf/g;
+const MAX_LISTING_PAGES = 4; // ~12 reports/page; covers well over a year back
+const MAX_FETCH_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 5000;
+
+async function findPdfUrl(targetYear: number, targetMonthIndex: number): Promise<string | null> {
+  const targetMM = String(targetMonthIndex + 1).padStart(2, '0');
+
+  for (let page = 0; page < MAX_LISTING_PAGES; page++) {
+    const url = page === 0 ? POSITION_REPORTS_LISTING_URL : `${POSITION_REPORTS_LISTING_URL}?page=${page}`;
+    let html: string;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      html = await res.text();
+    } catch {
+      continue;
+    }
+
+    for (const match of html.matchAll(PDF_HREF_PATTERN)) {
+      if (match[1] === String(targetYear) && match[2] === targetMM) {
+        return `https://www.almonds.org${match[0]}`;
+      }
+    }
+  }
+
+  return null;
+}
 
 async function fetchAbcPdf(): Promise<Buffer> {
   console.log('Step 2: Fetching ABC position report PDF...');
 
-  const searchUrl = `https://www.almonds.org/sites/default/files/2026-${String(monthIndex + 1).padStart(2, '0')}/${year}-${String(monthIndex + 1).padStart(2, '0')}-position-report.pdf`;
-  const altUrl = `https://www.almonds.org/sites/default/files/${year}-${String(monthIndex + 1).padStart(2, '0')}/position-report.pdf`;
-
-  for (const url of [searchUrl, altUrl]) {
-    try {
-      console.log(`  Trying: ${url}`);
-      const response = await fetch(url);
-      if (response.ok) {
-        console.log(`  Found PDF at ${url}`);
-        const buffer = await response.arrayBuffer();
-        return Buffer.from(buffer);
-      }
-    } catch {
-      // try next URL
+  let pdfUrl: string | null = null;
+  for (let attempt = 1; attempt <= MAX_FETCH_ATTEMPTS; attempt++) {
+    console.log(`  Scanning listing page for ${month} ${year} (attempt ${attempt}/${MAX_FETCH_ATTEMPTS})...`);
+    pdfUrl = await findPdfUrl(year, monthIndex);
+    if (pdfUrl) break;
+    if (attempt < MAX_FETCH_ATTEMPTS) {
+      console.log(`  Not found yet — listing page may be serving a stale/cached result. Retrying in ${RETRY_DELAY_MS / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     }
   }
 
-  console.log('  Could not find PDF at known URLs, will use Claude API to extract from page...');
-  return Buffer.alloc(0);
+  if (!pdfUrl) {
+    throw new Error(
+      `Could not locate the ${month} ${year} position report on ${POSITION_REPORTS_LISTING_URL} after ${MAX_FETCH_ATTEMPTS} attempts. ` +
+      `This may mean the report genuinely hasn't been published yet, or the listing page is serving a stale/cached result — ` +
+      `verify manually on almonds.org before retrying. Refusing to fabricate figures from model training knowledge.`
+    );
+  }
+
+  console.log(`  Found PDF: ${pdfUrl}`);
+  const response = await fetch(pdfUrl);
+  if (!response.ok) {
+    throw new Error(`Found PDF URL but download failed: ${pdfUrl} (HTTP ${response.status})`);
+  }
+  const buffer = await response.arrayBuffer();
+  return Buffer.from(buffer);
 }
 
 async function extractDataWithClaude(pdfBuffer: Buffer, historicalData: any): Promise<{
@@ -89,11 +139,8 @@ async function extractDataWithClaude(pdfBuffer: Buffer, historicalData: any): Pr
     ? historicalData.cropYears[priorCropKey]?.months?.[priorMonthKey]
     : null;
 
-  let prompt: string;
-
-  if (pdfBuffer.length > 0) {
-    const base64Pdf = pdfBuffer.toString('base64');
-    prompt = `You are analyzing an Almond Board of California position report PDF for ${month} ${year}.
+  const base64Pdf = pdfBuffer.toString('base64');
+  const prompt = `You are analyzing an Almond Board of California position report PDF for ${month} ${year}.
 
 Extract the following 6 raw values for BOTH the current crop year (${cropYear}, labeled as "${cropYearStart + 1} Crop" or "${cropYear}") and the prior crop year (${cropYearStart - 1}-${cropYearStart}, labeled as "${cropYearStart} Crop" or "${cropYearStart - 1}-${cropYearStart}"):
 
@@ -126,55 +173,24 @@ Return ONLY a JSON object with this exact structure (values in lbs as integers, 
 
 The PDF content is provided as a base64-encoded document.`;
 
-    const { text } = await generateText({
-      model: anthropic('claude-sonnet-4-6'),
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'file', data: base64Pdf, mimeType: 'application/pdf' },
-            { type: 'text', text: prompt },
-          ],
-        },
-      ],
-    });
+  const { text } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'file', data: base64Pdf, mimeType: 'application/pdf' },
+          { type: 'text', text: prompt },
+        ],
+      },
+    ],
+  });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Claude did not return valid JSON');
-    const extracted = JSON.parse(jsonMatch[0]);
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Claude did not return valid JSON');
+  const extracted = JSON.parse(jsonMatch[0]);
 
-    return calculateDerivedFields(extracted, priorMonthCurrentCrop, priorMonthPriorCrop);
-  } else {
-    // No PDF available — prompt Claude to search for the data
-    prompt = `I need the Almond Board of California position report data for ${month} ${year}.
-The ABC publishes these reports at: ${ABC_POSITION_REPORT_URL}
-
-I need the following metrics for BOTH the current crop year (${cropYear}) and prior crop year (${cropYearStart - 1}-${cropYearStart}):
-1. Crop Receipts to date (YTD)
-2. Total Shipments to date (YTD)
-3. Total Committed Shipments (Commitments)
-4. Uncommitted Inventory
-
-If you have this data from your training, return it as JSON. If not, return {"error": "PDF not available"}.
-
-Return ONLY JSON:
-{
-  "currentCrop": { "ytdReceipts": <number>, "ytdShipments": <number>, "commitments": <number>, "uncommittedInventory": <number> },
-  "priorCrop": { "ytdReceipts": <number>, "ytdShipments": <number>, "commitments": <number>, "uncommittedInventory": <number> }
-}`;
-
-    const { text } = await generateText({
-      model: anthropic('claude-sonnet-4-6'),
-      prompt,
-    });
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Claude did not return valid JSON');
-    const parsed = JSON.parse(jsonMatch[0]);
-    if (parsed.error) throw new Error(parsed.error);
-
-    return calculateDerivedFields(parsed, priorMonthCurrentCrop, priorMonthPriorCrop);
-  }
+  return calculateDerivedFields(extracted, priorMonthCurrentCrop, priorMonthPriorCrop);
 }
 
 function calculateDerivedFields(
